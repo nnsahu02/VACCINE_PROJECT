@@ -1,0 +1,29 @@
+{
+  "name": "vaccine_project",
+  "version": "1.0.0",
+  "description": "company Project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nnsahu02/VACCINE_PROJECT.git"
+  },
+  "author": "Nrusinghanath Sahu.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nnsahu02/VACCINE_PROJECT/issues"
+  },
+  "homepage": "https://github.com/nnsahu02/VACCINE_PROJECT#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "moment": "^2.29.4",
+    "mongoose": "^6.8.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^2.0.20"
+  }
+}
