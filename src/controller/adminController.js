@@ -95,4 +95,63 @@ const createSlot = async (req, res) => {
     }
 }
 
-module.exports = { createSlot, loginAdmin }
+
+const getRegisteredSlot = async (req, res) => {
+    try {
+        const queryData = req.query
+        const date = req.body.date
+
+        const { Age, Pincode, VaccinationStatus } = queryData
+
+        let filter = { date: date }
+
+        if (Age) {
+            filter.age = Age
+        }
+
+        if (Pincode) {
+            filter.pincode = { $in: Pincode }
+        }
+
+        if (VaccinationStatus) {
+            filter.vaccinated = VaccinationStatus
+        }
+
+        const allData = await registerSlotModel.find(filter)
+
+        return res.status(200).send({ status: true, message: "user with slot Details", data: allData })
+    } catch (error) {
+        return res.status(500).send({ status: false, message: error.message })
+    }
+}
+
+
+const updateVaccineStatus = async (req, res) => {
+    try {
+        const registerSlotData = await registerSlotModel.find()
+        for (let i = 0; i < registerSlotData.length; i++) {
+            let data = registerSlotData[i]
+            let userId = data.userId
+            const userData = await registerSlotModel.findOne({ userId })
+            if (userData.registered[0].dose[0] == 'First') {
+                const update = await registerSlotModel.findOneAndUpdate(
+                    { userId: userId },
+                    { $set: { vaccinated: ["First"] } }
+                )
+                return res.status(200).send({ status: true, message: "Vaccine status Updated.", data: update })
+            }
+            if (userData.registered[0].dose[0] == 'Second') {
+                const update = await registerSlotModel.findOneAndUpdate(
+                    { userId: userId },
+                    { $set: { vaccinated: ["Both"] } }
+                )
+                return res.status(200).send({ status: true, message: "Vaccine status Updated.", data: update })
+            }
+        }
+
+    } catch (error) {
+        return res.status(500).send({ status: false, message: error.message })
+    }
+}
+
+module.exports = { createSlot, loginAdmin, updateVaccineStatus, getRegisteredSlot }

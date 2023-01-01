@@ -269,13 +269,16 @@ const registerSlot = async (req, res) => {
             const checkdata = await registerSlotModel.findOne({ userId })
 
             if (checkdata != null) {
-                if (checkdata.registered.dose[0] == dose) {
+                let arr = checkdata.registered
+                let doseData = (arr[0].dose[0])
+                if (doseData == dose) {
                     return res.status(400).send({
                         status: false,
                         message: "You are already registered for firstDose"
                     })
                 }
-                if (checkdata.vaccinated[0] == ("Both" || "First")) {
+                console.log(checkdata.vaccinated[0])
+                if (checkdata.vaccinated[0] == 'First' || 'Both') {
                     return res.status(400).send({
                         status: false,
                         message: "You are already vaccinated with first dose."
@@ -314,24 +317,23 @@ const registerSlot = async (req, res) => {
 
             const checkdata = await registerSlotModel.findOne({ userId })
             if (checkdata != null) {
-                if (checkdata.registered.dose[0] == dose) {
+                let arr = checkdata.registered
+                let doseData = (arr[0].dose[0])
+                if (doseData == dose) {
                     return res.status(400).send({
                         status: false,
                         message: "You are already registered for second Dose"
                     })
                 }
             }
-            let x = checkdata.vaccinated[0]
-            let y = x.toString()
-            console.log(y)
-            if (checkdata.vaccinated[0] == ("Both")) {
+            if (checkdata.vaccinated[0] == "Both") {
                 return res.status(400).send({
                     status: false,
                     message: "You are already vaccinated with Both dose."
                 })
             }
 
-            if (checkdata.vaccinated[0] == y) {
+            if (checkdata.vaccinated[0] == 'First') {
 
                 const registerSlotObj = {
                     date: date,
@@ -344,13 +346,16 @@ const registerSlot = async (req, res) => {
                         pincode: userData.Pincode,
                         aadharNumber: userData.AadharNo,
                         dose: dose
-                    }
+                    },
+                    vaccinated: ['First']
                 }
                 await slotModel.findOneAndUpdate(
                     { date: date, time: time },
                     { $inc: { doses: -1 } },
                     { new: true }
                 )
+
+                const findDataDelete = await registerSlotModel.findOneAndDelete({ userId })
                 const registerData = await registerSlotModel.create(registerSlotObj)
 
                 return res.status(200).send({ status: true, message: "Successfully registered for Second Dose.", data: registerData })

@@ -22,4 +22,10 @@ router.post('/:userId/slot/register', userController.registerSlot)
 //createSlot
 router.post('/:adminId/slots/day', adminController.createSlot)
 
+//GET REGISTERED SLOT DATA
+router.get('/:adminId/registered/slot', adminController.getRegisteredSlot)
+
+//UPDATE VACCINATION STATUS
+router.put("/:adminId/update/status", adminController.updateVaccineStatus)
+
 module.exports = router

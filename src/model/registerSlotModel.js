@@ -15,7 +15,7 @@ const registerSlotSchema = new mongoose.Schema(
             type: ObjectId,
             required: true
         },
-        registered: {  // Array of users who have registered for the slot
+        registered: [{  // Array of users who have registered for the slot
 
             name: {   // Name of the user
                 type: String,
@@ -42,7 +42,7 @@ const registerSlotSchema = new mongoose.Schema(
                 enum: ["First", "Second"],
                 required: true
             }
-        },
+        }],
         vaccinated: {  //vaccination status
             type: [String],
             enum: ["First", "Second", "Both", "NA"],
