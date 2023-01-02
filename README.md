@@ -110,7 +110,7 @@ This API will allow users to register with the vaccine registration app by provi
 This API will allow users to log in to the app using their phone number and password.
 
 ### 3.Available vaccine slots API:
- This API will allow users to view the available vaccine slots on a given day, filtered by their vaccination status (first dose or second dose).
+This API will allow users to view the available vaccine slots on a given day, filtered by their vaccination status (first dose or second dose).
 
 ### 4.Register for vaccine slot API: 
 This API will allow users to register for a vaccine slot by providing the date and time of the slot and the dose (first or second).

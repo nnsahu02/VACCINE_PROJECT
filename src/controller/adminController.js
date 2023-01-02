@@ -95,7 +95,7 @@ const createSlot = async (req, res) => {
     }
 }
 
-
+//GET REGISTERED SLOT DATA
 const getRegisteredSlot = async (req, res) => {
     try {
         const queryData = req.query
@@ -106,11 +106,14 @@ const getRegisteredSlot = async (req, res) => {
         let filter = { date: date }
 
         if (Age) {
-            filter.age = Age
+            ageNum = parseInt(Age)
+            const data = await registerSlotModel.find({ registered: { $elemMatch: { age: Age } } })
+            return res.status(200).send({ status: true, message: "user with slot Details", data: data })
         }
 
         if (Pincode) {
-            filter.pincode = { $in: Pincode }
+            const data = await registerSlotModel.find({ registered: { $elemMatch: { pincode: Pincode } } })
+            return res.status(200).send({ status: true, message: "user with slot Details", data: data })
         }
 
         if (VaccinationStatus) {
@@ -125,33 +128,105 @@ const getRegisteredSlot = async (req, res) => {
     }
 }
 
-
+//UPDATE VACCINATION STATUS
 const updateVaccineStatus = async (req, res) => {
     try {
-        const registerSlotData = await registerSlotModel.find()
+        const registerSlotData = await registerSlotModel.find({ $or: [{ vaccinated: "NA" }, { vaccinated: "First" }] })
+        if (registerSlotData.length == 0) {
+            return res.status(404).send({ status: false, message: "No user found to update vaccination status" })
+        }
+        let arr = []
         for (let i = 0; i < registerSlotData.length; i++) {
             let data = registerSlotData[i]
             let userId = data.userId
             const userData = await registerSlotModel.findOne({ userId })
-            if (userData.registered[0].dose[0] == 'First') {
-                const update = await registerSlotModel.findOneAndUpdate(
-                    { userId: userId },
-                    { $set: { vaccinated: ["First"] } }
-                )
-                return res.status(200).send({ status: true, message: "Vaccine status Updated.", data: update })
-            }
-            if (userData.registered[0].dose[0] == 'Second') {
-                const update = await registerSlotModel.findOneAndUpdate(
-                    { userId: userId },
-                    { $set: { vaccinated: ["Both"] } }
-                )
-                return res.status(200).send({ status: true, message: "Vaccine status Updated.", data: update })
+
+            if (userData.vaccinated != 'Both') {
+                if (userData.registered[0].dose[0] == 'First') {
+                    const update = await registerSlotModel.findOneAndUpdate(
+                        { userId: userId },
+                        { $set: { vaccinated: ["First"] } },
+                        { new: true }
+                    )
+                    arr.push(update)
+                }
+                if (userData.registered[0].dose[0] == 'Second') {
+                    const update = await registerSlotModel.findOneAndUpdate(
+                        { userId: userId },
+                        { $set: { vaccinated: ["Both"] } },
+                        { new: true }
+                    )
+                    arr.push(update)
+                }
             }
         }
+        return res.status(200).send({ status: true, message: "Vaccine status Updated.", data: arr })
 
     } catch (error) {
         return res.status(500).send({ status: false, message: error.message })
     }
 }
 
-module.exports = { createSlot, loginAdmin, updateVaccineStatus, getRegisteredSlot }
+//get Slot Data 
+const getSlot = async (req, res) => {
+    try {
+        const date = req.body.date
+        if (!date) {
+            return res.status(400).send({ status: false, message: "Please provide date in request body." })
+        }
+        const data = await timeSlotModel.find({ date }).sort({ time: 1 })
+        return res.status(200).send({ status: true, message: `slots for ${date} are :-`, data: data })
+    } catch (error) {
+        return res.status(500).send({ status: false, message: error.message })
+    }
+}
+
+//Admin vaccine slots API
+const registerVaccineSlot = async (req, res) => {
+    try {
+        const date = req.body.date
+        const doseData = req.query.dose
+
+        if (doseData) {
+            const regData = await registerSlotModel.find({ registered: { $elemMatch: { dose: doseData } } })
+            let len = regData.length
+
+            let arr = []
+            for (let i = 0; i < len; i++) {
+                if (regData[i].date == date) {
+                    if (regData[i].vaccinated != "Both") {
+                        if (regData[i].vaccinated == "NA" || (regData[i].vaccinated == "First" && regData[i].registered[0].dose[0] == "Second"))
+                            arr.push(regData[i])
+                    }
+                }
+            }
+            if (arr.length == 0) {
+                return res.status(200).send({ status: true, message: `no user register for vaccination in ${date}` })
+            }
+            return res.status(200).send({
+                status: true,
+                message: `There are ${arr.length}  user registered for ${doseData} dose in ${date}.`, data: arr
+            })
+        }
+
+        const data = await registerSlotModel.find({ date: date })
+        let arr = []
+        for (let i = 0; i < data.length; i++) {
+            if (data[i].vaccinated != "Both") {
+                if (data[i].vaccinated == "NA" || (data[i].vaccinated == "First" && data[i].registered[0].dose[0] == "Second"))
+                    arr.push(data[i])
+            }
+        }
+        if (arr.length == 0) {
+            return res.status(200).send({ status: true, message: `no user register for vaccination in ${date}` })
+        }
+        return res.status(200).send({
+            status: true,
+            message: `There are ${arr.length}  user registered for ${doseData} dose in ${date}.`, data: arr
+        })
+    } catch (error) {
+        return res.status(500).send({ status: false, message: error.message })
+    }
+}
+
+module.exports = { createSlot, loginAdmin, updateVaccineStatus, getRegisteredSlot, getSlot, registerVaccineSlot }

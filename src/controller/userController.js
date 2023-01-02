@@ -192,7 +192,7 @@ const getSlot = async (req, res) => {
         if (!date) {
             return res.status(400).send({ status: false, message: "Please provide date in request body." })
         }
-        const slotData = await slotModel.find({ date })
+        const slotData = await slotModel.find({ date }).sort({ time: 1 })
         if (slotData.length == 0) {
             return res.status(404).send({ status: false, message: `no slot found with the date ${date}` })
         }
@@ -277,7 +277,6 @@ const registerSlot = async (req, res) => {
                         message: "You are already registered for firstDose"
                     })
                 }
-                console.log(checkdata.vaccinated[0])
                 if (checkdata.vaccinated[0] == 'First' || 'Both') {
                     return res.status(400).send({
                         status: false,
@@ -325,12 +324,16 @@ const registerSlot = async (req, res) => {
                         message: "You are already registered for second Dose"
                     })
                 }
+                if (checkdata.vaccinated[0] == "Both") {
+                    return res.status(400).send({
+                        status: false,
+                        message: "You are already vaccinated with Both dose."
+                    })
+                }
             }
-            if (checkdata.vaccinated[0] == "Both") {
-                return res.status(400).send({
-                    status: false,
-                    message: "You are already vaccinated with Both dose."
-                })
+
+            if ((checkdata == null)) {
+                return res.status(400).send({ status: false, message: "Please register for the First dose First." })
             }
 
             if (checkdata.vaccinated[0] == 'First') {
@@ -355,7 +358,7 @@ const registerSlot = async (req, res) => {
                     { new: true }
                 )
 
-                const findDataDelete = await registerSlotModel.findOneAndDelete({ userId })
+                await registerSlotModel.findOneAndDelete({ userId })
                 const registerData = await registerSlotModel.create(registerSlotObj)
 
                 return res.status(200).send({ status: true, message: "Successfully registered for Second Dose.", data: registerData })
@@ -370,6 +373,63 @@ const registerSlot = async (req, res) => {
     }
 }
 
+//Update registered vaccine slot API
+const updateRegisteredSlot = async (req, res) => {
+    try {
+        const bodyData = req.body
+        const { slotId, newDate, newTime } = bodyData
+
+        const regSlot = await registerSlotModel.findById({_id : slotId })
+        if (!regSlot) {
+            return res.status(404).send({ status: false, message: `no slot found with ${slotId}` })
+        }
+
+        let oldDate = regSlot.date
+        let oldTime = regSlot.time
+
+        let oldDate1 = new Date(oldDate)
+        let newDate1 = new Date(newDate)
+        const diff = newDate1 - oldDate1
+
+        const updateAllowed = diff >= (24 * 60 * 60 * 1000)
+
+        if (!updateAllowed) {
+            return res.status(400).send({ status: false, message: "Update is not allowed (must be at least 24 hours prior to the original slot time)" })
+        }
+
+        const dateSlotCheck = await slotModel.findOne({ date: newDate, time: newTime })
+        if (!dateSlotCheck) {
+            return res.status(400).send({ status: false, message: `There is no slot with at ${newTime} in ${newDate}` })
+        }
+
+        if (dateSlotCheck.doses == 0) {
+            return res.status(400).send({ status: false, message: `All the slot is already booked at ${newTime} in ${newDate}` })
+        }
+
+        const slotData = await registerSlotModel.findByIdAndUpdate(
+            { _id: slotId },
+            { $set: { date: newDate, time: newTime } },
+            { new: true }
+        )
+
+        await slotModel.findOneAndUpdate(
+            { date: oldDate, time: oldTime },
+            { $inc: { doses: 1 } },
+            { new: true }
+        )
+
+        await slotModel.findOneAndUpdate(
+            { date: newDate, time: newTime },
+            { $inc: { doses: -1 } },
+            { new: true }
+        )
+
+        return res.status(200).send({ status: true, message: "Updated Registered Vaccine Slot.", data: slotData })
+
+    } catch (error) {
+        return res.status(500).send({ status: false, message: error.message })
+    }
+}
 
 
-module.exports = { registerUser, login, getSlot, registerSlot }
+module.exports = { registerUser, login, getSlot, registerSlot, updateRegisteredSlot }

@@ -16,16 +16,25 @@ router.get('/slots', userController.getSlot)
 //REGISTER SLOT
 router.post('/:userId/slot/register', userController.registerSlot)
 
+//Update registered vaccine slot 
+router.put('/:userId/update/slot', userController.updateRegisteredSlot)
+
 
 
 //ADMIN APIs
 //createSlot
 router.post('/:adminId/slots/day', adminController.createSlot)
 
-//GET REGISTERED SLOT DATA
-router.get('/:adminId/registered/slot', adminController.getRegisteredSlot)
+//GET SLOTS PER DAY
+router.get("/:adminId/slots/day", adminController.getSlot)
+
+//GET USER REGISTERED FOR SLOT DATA  
+router.get('/:adminId/user/registerslot', adminController.getRegisteredSlot)
 
 //UPDATE VACCINATION STATUS
 router.put("/:adminId/update/status", adminController.updateVaccineStatus)
+
+//Admin vaccine slots API
+router.get("/:adminId/register/vaccine/slot", adminController.registerVaccineSlot)
 
 module.exports = router
